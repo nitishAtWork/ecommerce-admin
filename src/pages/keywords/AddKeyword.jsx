@@ -11,6 +11,8 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import JoditEditor from "jodit-react";
+import editorConfig from "../../components/ui/EditorConfig";
 
 import PageHeader from "../../components/common/PageHeader";
 import Button from "../../components/ui/Button";

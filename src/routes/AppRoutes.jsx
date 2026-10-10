@@ -41,6 +41,8 @@ import KeywordInCity from "../pages/keywordInCity/KeywordInCity";
 import OurPresence from "../pages/ourPresence/OurPresence";
 import Enquiries from "../pages/enquiries/Enquiries";
 import EnquiryDetails from "../pages/enquiries/EnquiryDetails";
+import KeywordForm from "../pages/keywords/KeywordForm";
+import ProductForm from "../pages/products/ProductForm";
 
 function AppRoutes() {
     return (
@@ -94,13 +96,13 @@ function AppRoutes() {
                     {/* /admin/products/add */}
                     <Route
                         path="products/add"
-                        element={<AddProduct />}
+                        element={<ProductForm />}
                     />
 
                     {/* /admin/products/:id/edit */}
                     <Route
                         path="products/:id/edit"
-                        element={<EditProduct />}
+                        element={<ProductForm />}
                     />
 
                     {/* /admin/products/:id */}
@@ -118,11 +120,11 @@ function AppRoutes() {
 
                         <Route
                             path="keywords/add"
-                            element={<AddKeyword />}
+                            element={<KeywordForm />}
                         />
                         <Route
                             path="keywords/:id/edit"
-                            element={<EditKeyword />}
+                            element={<KeywordForm />}
                         />
 
                         {/* /admin/keywords/:id */}

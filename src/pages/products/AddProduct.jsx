@@ -49,6 +49,19 @@ const productSchema = z.object({
     .int("Stock must be a whole number.")
     .min(0, "Stock cannot be negative."),
 
+  size: z
+    .string()
+    .trim()
+    .optional()
+    .or(z.literal("")),
+
+  deliveryCharge: z.coerce
+    .number()
+    .nonnegative(
+      "Delivery charge cannot be negative."
+    )
+    .optional(),
+
   sku: z
     .string()
     .trim()
@@ -96,6 +109,8 @@ function AddProduct() {
       price: "",
       compareAtPrice: "",
       stock: 0,
+      size: "",
+      deliveryCharge: 0,
       sku: "",
       brand: "",
     },
@@ -194,13 +209,13 @@ function AddProduct() {
 
   const onSubmit = async (values) => {
     try {
-      if (!mainImage) {
-        toast.error(
-          "Please select a main product image."
-        );
+      // if (!mainImage) {
+      //   toast.error(
+      //     "Please select a main product image."
+      //   );
 
-        return;
-      }
+      //   return;
+      // }
 
       const formData = new FormData();
 
@@ -240,6 +255,16 @@ function AddProduct() {
       );
 
       formData.append(
+        "size",
+        values.size || ""
+      );
+
+      formData.append(
+        "deliveryCharge",
+        values.deliveryCharge || 0
+      );
+
+      formData.append(
         "sku",
         values.sku.toUpperCase()
       );
@@ -265,10 +290,9 @@ function AddProduct() {
        * IMPORTANT:
        * Backend expects main image as `img`.
        */
-      formData.append(
-        "img",
-        mainImage
-      );
+      if (mainImage) {
+        formData.append("img", mainImage);
+      }
 
       /*
        * Backend accepts up to 10 additional
@@ -305,7 +329,7 @@ function AddProduct() {
 
       toast.error(
         error.response?.data?.message ||
-          "Failed to create product."
+        "Failed to create product."
       );
     }
   };
@@ -421,6 +445,25 @@ function AddProduct() {
                 errors.compareAtPrice?.message
               }
               {...register("compareAtPrice")}
+            />
+
+            <Input
+              label="Size"
+              name="size"
+              placeholder="e.g. 8 inch, Medium, Large"
+              error={errors.size?.message}
+              {...register("size")}
+            />
+
+            <Input
+              label="Delivery Charge"
+              name="deliveryCharge"
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="0.00"
+              error={errors.deliveryCharge?.message}
+              {...register("deliveryCharge")}
             />
 
             <Input
@@ -672,27 +715,29 @@ function AddProduct() {
         </section>
 
         {/* Actions */}
-        <div className="flex flex-col-reverse justify-end gap-3 sm:flex-row">
+        <div className="sticky bottom-0 z-30 -mx-4 mt-8 border-t border-slate-200 bg-white/95 px-4 py-4 backdrop-blur-md sm:-mx-6 sm:px-6">
+          <div className="flex flex-col-reverse justify-end gap-3 sm:flex-row">
 
-          <Button
-            type="button"
-            variant="secondary"
-            disabled={isSubmitting}
-            onClick={() =>
-              navigate("/admin/products")
-            }
-          >
-            Cancel
-          </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={isSubmitting}
+              onClick={() =>
+                navigate("/admin/products")
+              }
+            >
+              Cancel
+            </Button>
 
-          <Button
-            type="submit"
-            loading={isSubmitting}
-            disabled={isSubmitting}
-          >
-            Create Product
-          </Button>
+            <Button
+              type="submit"
+              loading={isSubmitting}
+              disabled={isSubmitting}
+            >
+              Create Product
+            </Button>
 
+          </div>
         </div>
 
       </form>

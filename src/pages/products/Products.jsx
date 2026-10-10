@@ -414,9 +414,7 @@ function ProductRow({
       <td className="px-5 py-4">
 
         <div className="flex items-center gap-3">
-
           <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
-
             {image ? (
               <img
                 src={image}
@@ -428,12 +426,11 @@ function ProductRow({
                 <PackageOpen size={20} />
               </div>
             )}
-
           </div>
 
           <div className="min-w-0">
 
-            <p className="truncate text-sm font-medium text-slate-900">
+            <p className="truncate text-sm font-medium text-slate-900 max-w-70">
               {product.name}
             </p>
 
@@ -524,7 +521,7 @@ function ProductRow({
       {/* Actions */}
       <td className="px-5 py-4 text-right max-w-32">
 
-        <div className="relative flex items-center justify-end">
+        <div className="relative flex items-center gap-3 justify-end">
 
           <button
             type="button"

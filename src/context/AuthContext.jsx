@@ -10,9 +10,46 @@ import { API_ENDPOINTS } from "../api/endpoints";
 
 const AuthContext = createContext(null);
 
-export function AuthProvider({ children }) {
+const ADMIN_ROLES = ["ADMIN", "SUPERADMIN"];
+const SUPERADMIN_ROLE = "SUPERADMIN";
+
+const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  /*
+   * Check whether user is allowed
+   * to access the admin panel.
+   */
+  const isAdminUser = (userData) => {
+    if (!userData?.role) {
+      return false;
+    }
+
+    return ADMIN_ROLES.includes(
+      String(userData.role).toUpperCase()
+    );
+  };
+
+  const isSuperAdminUser = (userData) => {
+    if (!userData?.role) {
+      return false;
+    }
+
+    return (
+      String(userData.role).toUpperCase() ===
+      SUPERADMIN_ROLE
+    );
+  };
+
+  /*
+   * Clear admin authentication
+   */
+  const clearAuth = () => {
+    localStorage.removeItem("adminToken");
+    localStorage.removeItem("adminUser");
+    setUser(null);
+  };
 
   /*
    * Restore authentication
@@ -34,26 +71,28 @@ export function AuthProvider({ children }) {
       }
 
       /*
-       * Restore cached user immediately
+       * Restore cached user only if
+       * the user has an allowed admin role.
        */
       if (storedUser) {
         try {
-          setUser(
-            JSON.parse(storedUser)
-          );
+          const parsedUser =
+            JSON.parse(storedUser);
+
+          if (isAdminUser(parsedUser)) {
+            setUser(parsedUser);
+          } else {
+            clearAuth();
+            setLoading(false);
+            return;
+          }
         } catch {
-          localStorage.removeItem(
-            "adminUser"
-          );
+          localStorage.removeItem("adminUser");
         }
       }
 
       /*
-       * Verify current authentication.
-       *
-       * If access token is expired,
-       * apiClient automatically calls
-       * /auth/refresh and retries /auth/me.
+       * Verify current authentication
        */
       try {
         const response =
@@ -66,24 +105,26 @@ export function AuthProvider({ children }) {
           response.data?.data?.user ||
           response.data?.data;
 
-        if (loggedInUser) {
-          localStorage.setItem(
-            "adminUser",
-            JSON.stringify(loggedInUser)
+        /*
+         * Authentication succeeded but
+         * user doesn't have admin access.
+         */
+        if (!isAdminUser(loggedInUser)) {
+          clearAuth();
+
+          throw new Error(
+            "You do not have permission to access the admin panel."
           );
-
-          setUser(loggedInUser);
         }
-      } catch {
-        localStorage.removeItem(
-          "adminToken"
+
+        localStorage.setItem(
+          "adminUser",
+          JSON.stringify(loggedInUser)
         );
 
-        localStorage.removeItem(
-          "adminUser"
-        );
-
-        setUser(null);
+        setUser(loggedInUser);
+      } catch (error) {
+        clearAuth();
       } finally {
         setLoading(false);
       }
@@ -126,19 +167,27 @@ export function AuthProvider({ children }) {
       );
     }
 
+    /*
+     * IMPORTANT:
+     * Check role BEFORE storing the token.
+     */
+    if (!isAdminUser(loggedInUser)) {
+      throw new Error(
+        "You do not have permission to access the admin panel."
+      );
+    }
+
     localStorage.setItem(
       "adminToken",
       token
     );
 
-    if (loggedInUser) {
-      localStorage.setItem(
-        "adminUser",
-        JSON.stringify(loggedInUser)
-      );
+    localStorage.setItem(
+      "adminUser",
+      JSON.stringify(loggedInUser)
+    );
 
-      setUser(loggedInUser);
-    }
+    setUser(loggedInUser);
 
     return data;
   };
@@ -155,15 +204,7 @@ export function AuthProvider({ children }) {
       // Ignore logout API errors
     }
 
-    localStorage.removeItem(
-      "adminToken"
-    );
-
-    localStorage.removeItem(
-      "adminUser"
-    );
-
-    setUser(null);
+    clearAuth();
 
     window.location.href =
       "/admin/login";
@@ -172,6 +213,9 @@ export function AuthProvider({ children }) {
   const isAuthenticated =
     Boolean(user);
 
+  /*
+   * Check user role
+   */
   const hasRole = (roles = []) => {
     if (!user) {
       return false;
@@ -181,8 +225,18 @@ export function AuthProvider({ children }) {
       roles = [roles];
     }
 
-    return roles.includes(user.role);
+    return roles.some(
+      (role) =>
+        String(role).toUpperCase() ===
+        String(user.role).toUpperCase()
+    );
   };
+
+  /*
+   * Specifically check admin access
+   */
+  const isAdmin = isAdminUser(user);
+  const isSuperAdmin = isSuperAdminUser(user);
 
   return (
     <AuthContext.Provider
@@ -190,6 +244,8 @@ export function AuthProvider({ children }) {
         user,
         loading,
         isAuthenticated,
+        isAdmin,
+        isSuperAdmin,
         login,
         logout,
         hasRole,
@@ -198,7 +254,9 @@ export function AuthProvider({ children }) {
       {children}
     </AuthContext.Provider>
   );
-}
+};
+
+export { AuthProvider };
 
 export function useAuth() {
   const context =

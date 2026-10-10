@@ -1,17 +1,25 @@
 import { useState, useEffect } from "react";
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
 import {
     LayoutDashboard,
     Package,
     ShoppingCart,
     Users,
-    BarChart3,
     Settings,
     Menu,
     X,
     LogOut,
-    Store,
+    StarCheck,
+    FileKey,
+    LocationEditIcon,
+    ChevronDown,
+    ChevronRight,
+    BriefcaseBusiness,
+    MapPinned,
+    ContactIcon,
 } from "lucide-react";
+import { FaSearchLocation } from "react-icons/fa";
+
 
 import { useAuth } from "../context/AuthContext";
 
@@ -23,37 +31,136 @@ const menuItems = [
         icon: LayoutDashboard,
         path: "/admin",
         end: true,
+        roles: ["ADMIN", "SUPERADMIN"],
     },
     {
         label: "Products",
         icon: Package,
         path: "/admin/products",
+        roles: ["ADMIN", "SUPERADMIN"],
+    },
+    {
+        label: "Keywords",
+        icon: FileKey,
+        path: "/admin/keywords",
+        roles: ["SUPERADMIN"],
+    },
+    {
+        label: "Location",
+        icon: LocationEditIcon,
+        roles: ["SUPERADMIN"],
+        children: [
+            {
+                label: "Country",
+                path: "/admin/locations/countries",
+                roles: ["SUPERADMIN"],
+            },
+            {
+                label: "State",
+                path: "/admin/locations/states",
+                roles: ["SUPERADMIN"],
+            },
+            {
+                label: "City",
+                path: "/admin/locations/cities",
+                roles: ["SUPERADMIN"],
+            },
+        ],
+    },
+    {
+        label: "Business Nature",
+        icon: BriefcaseBusiness,
+        path: "/admin/nature-of-business",
+        roles: ["SUPERADMIN"],
+    },
+    {
+        label: "Keyword In City",
+        icon: FaSearchLocation,
+        path: "/admin/keyword-in-city",
+        roles: ["SUPERADMIN"],
+    },
+    {
+        label: "Our Presence",
+        icon: MapPinned,
+        path: "/admin/our-presence",
+        roles: ["SUPERADMIN"],
     },
     {
         label: "Orders",
         icon: ShoppingCart,
         path: "/admin/orders",
+        roles: ["ADMIN", "SUPERADMIN"],
     },
     {
         label: "Customers",
         icon: Users,
         path: "/admin/customers",
+        roles: ["ADMIN", "SUPERADMIN"],
     },
     {
-        label: "Reports",
-        icon: BarChart3,
-        path: "/admin/reports",
+        label: "Reviews",
+        icon: StarCheck,
+        path: "/admin/reviews",
+        roles: ["ADMIN", "SUPERADMIN"],
     },
     {
         label: "Settings",
         icon: Settings,
         path: "/admin/settings",
+        roles: ["ADMIN", "SUPERADMIN"],
+    },
+    {
+        label: "Enquiry",
+        icon: ContactIcon,
+        path: "/admin/enquiries",
+        roles: ["ADMIN", "SUPERADMIN"],
     },
 ];
 
 function AdminLayout() {
     const [sidebarOpen, setSidebarOpen] = useState(false);
-    const { user, logout } = useAuth();
+    const [openMenus, setOpenMenus] = useState({
+        Location: false,
+    });
+    const location = useLocation();
+
+    useEffect(() => {
+        if (location.pathname.startsWith("/admin/locations")) {
+            setOpenMenus((prev) => ({
+                ...prev,
+                Location: true,
+            }));
+        }
+    }, [location.pathname]);
+
+    const toggleMenu = (label) => {
+        setOpenMenus((prev) => ({
+            ...prev,
+            [label]: !prev[label],
+        }));
+    };
+    const {
+        user,
+        logout,
+        isAuthenticated,
+        loading,
+    } = useAuth();
+
+    const userRole = String(
+        user?.role || ""
+    ).toUpperCase();
+
+    const finalMenu = menuItems.filter((item) => {
+        /*
+         * No roles specified means
+         * everyone with admin access can see it.
+         */
+        if (!item.roles?.length) {
+            return true;
+        }
+
+        return item.roles.includes(userRole);
+    });
 
     const [siteInfo, setSiteInfo] = useState({});
 
@@ -119,19 +226,6 @@ function AdminLayout() {
                 <div className="flex h-16 items-center justify-between border-b border-slate-200 px-5">
 
                     <div className="flex items-center justify-center gap-2 mx-auto">
-                        {/* <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600 text-white">
-                            <Store size={20} />
-                        </div>
-
-                        <div>
-                            <h1 className="text-sm font-bold text-slate-900">
-                                Ecommerce
-                            </h1>
-
-                            <p className="text-xs text-slate-500">
-                                Admin Panel
-                            </p>
-                        </div> */}
                         <img src={siteInfo?.logo} alt={siteInfo?.name || "Logo"} title={siteInfo?.name || "Logo"} className="h-14 w-auto block mx-auto" />
                     </div>
 
@@ -155,9 +249,133 @@ function AdminLayout() {
 
                     <ul className="space-y-1">
 
-                        {menuItems.map((item) => {
+                        {finalMenu?.map((item) => {
                             const Icon = item.icon;
 
+                            // Parent menu with children
+                            if (item.children?.length) {
+                                const isParentActive = item.children.some((child) =>
+                                    location.pathname.startsWith(child.path)
+                                );
+
+                                const isOpen = openMenus[item.label] || isParentActive;
+
+                                return (
+                                    <li key={item.label}>
+
+                                        {/* Parent */}
+                                        <button
+                                            type="button"
+                                            onClick={() => toggleMenu(item.label)}
+                                            className={`
+                            flex w-full items-center justify-between
+                            rounded-lg px-3 py-2.5
+                            text-sm font-medium
+                            transition-colors
+                            ${isParentActive
+                                                    ? "bg-blue-50 text-blue-600"
+                                                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                                                }
+                        `}
+                                        >
+                                            <span className="flex items-center gap-3">
+
+                                                <Icon
+                                                    size={19}
+                                                    strokeWidth={isParentActive ? 2.2 : 1.8}
+                                                />
+
+                                                <span>{item.label}</span>
+
+                                            </span>
+
+                                            {isOpen ? (
+                                                <ChevronDown
+                                                    size={16}
+                                                    strokeWidth={2}
+                                                />
+                                            ) : (
+                                                <ChevronRight
+                                                    size={16}
+                                                    strokeWidth={2}
+                                                />
+                                            )}
+                                        </button>
+
+                                        {/* Children */}
+                                        <div
+                                            className={`
+                            grid transition-all duration-200 ease-in-out
+                            ${isOpen
+                                                    ? "grid-rows-[1fr] opacity-100"
+                                                    : "grid-rows-[0fr] opacity-0"
+                                                }
+                        `}
+                                        >
+                                            <div className="overflow-hidden">
+
+                                                <ul className="ml-5 mt-1 space-y-1 border-l border-slate-200 pl-3">
+
+                                                    {item.children
+                                                        .filter((child) => {
+                                                            if (!child.roles?.length) {
+                                                                return true;
+                                                            }
+
+                                                            return child.roles.includes(userRole);
+                                                        })
+                                                        .map((child) => (
+                                                            <li key={child.path}>
+
+                                                                <NavLink
+                                                                    to={child.path}
+                                                                    end
+                                                                    onClick={closeSidebar}
+                                                                    className={({ isActive }) =>
+                                                                        `
+                                                        flex items-center gap-2
+                                                        rounded-lg px-3 py-2
+                                                        text-sm font-medium
+                                                        transition-colors
+                                                        ${isActive
+                                                                            ? "bg-blue-50 text-blue-600"
+                                                                            : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                                                                        }
+                                                    `
+                                                                    }
+                                                                >
+                                                                    {({ isActive }) => (
+                                                                        <>
+                                                                            <span
+                                                                                className={`
+                                                                h-1.5 w-1.5 rounded-full
+                                                                ${isActive
+                                                                                        ? "bg-blue-600"
+                                                                                        : "bg-slate-300"
+                                                                                    }
+                                                            `}
+                                                                            />
+
+                                                                            <span>
+                                                                                {child.label}
+                                                                            </span>
+                                                                        </>
+                                                                    )}
+                                                                </NavLink>
+
+                                                            </li>
+                                                        ))}
+
+                                                </ul>
+
+                                            </div>
+                                        </div>
+
+                                    </li>
+                                );
+                            }
+
+                            // Normal menu item
                             return (
                                 <li key={item.path}>
 
@@ -167,18 +385,17 @@ function AdminLayout() {
                                         onClick={closeSidebar}
                                         className={({ isActive }) =>
                                             `
-                      flex items-center gap-3 rounded-lg
-                      px-3 py-2.5
-                      text-sm font-medium
-                      transition-colors
-                      ${isActive
+                            flex items-center gap-3 rounded-lg
+                            px-3 py-2.5
+                            text-sm font-medium
+                            transition-colors
+                            ${isActive
                                                 ? "bg-blue-50 text-blue-600"
                                                 : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                                             }
-                      `
+                        `
                                         }
                                     >
-
                                         {({ isActive }) => (
                                             <>
                                                 <Icon
@@ -189,7 +406,6 @@ function AdminLayout() {
                                                 <span>{item.label}</span>
                                             </>
                                         )}
-
                                     </NavLink>
 
                                 </li>

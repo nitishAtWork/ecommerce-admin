@@ -414,14 +414,14 @@ function Countries() {
                                                     onClick={() => handleToggleStatus(country)}
                                                     disabled={toggleMutation.isPending}
                                                     className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${country.isActive
-                                                            ? "bg-green-500"
-                                                            : "bg-slate-300"
+                                                        ? "bg-green-500"
+                                                        : "bg-slate-300"
                                                         }`}
                                                 >
                                                     <span
                                                         className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform duration-200 ${country.isActive
-                                                                ? "translate-x-5"
-                                                                : "translate-x-0.5"
+                                                            ? "translate-x-5"
+                                                            : "translate-x-0.5"
                                                             }`}
                                                     />
                                                 </button>
@@ -454,7 +454,7 @@ function Countries() {
                                                                 `/admin/locations/countries/${country._id}/edit`
                                                             )
                                                         }
-                                                        className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+                                                        className="rounded-lg border border-gray-200 p-2.5 text-blue-600 transition hover:bg-blue-50"
                                                         title="Edit"
                                                     >
                                                         <Pencil
@@ -471,7 +471,7 @@ function Countries() {
                                                                 country
                                                             )
                                                         }
-                                                        className="flex h-8 w-8 items-center justify-center rounded-lg text-red-500 transition hover:bg-red-50 hover:text-red-700"
+                                                       className="rounded-lg border border-gray-200 p-2.5 text-red-600 transition hover:bg-red-50 disabled:opacity-50"
                                                         title="Delete"
                                                     >
                                                         <Trash2

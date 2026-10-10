@@ -43,6 +43,8 @@ import Enquiries from "../pages/enquiries/Enquiries";
 import EnquiryDetails from "../pages/enquiries/EnquiryDetails";
 import KeywordForm from "../pages/keywords/KeywordForm";
 import ProductForm from "../pages/products/ProductForm";
+import Pages from "../pages/pages/Pages";
+import PageForm from "../pages/pages/PageForm";
 
 function AppRoutes() {
     return (
@@ -110,6 +112,10 @@ function AppRoutes() {
                         path="products/:id"
                         element={<ProductDetails />}
                     />
+
+                    <Route path="pages" element={<Pages />} />
+                    <Route path="pages/add" element={<PageForm />} />
+                    <Route path="pages/edit/:id" element={<PageForm />} />
 
                     <Route element={<SuperProtectedRoute />}>
                         {/* /admin/keywords*/}

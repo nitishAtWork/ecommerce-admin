@@ -9,6 +9,7 @@ import {
     Power,
     Loader2,
     MapPin,
+    Pencil,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
@@ -411,10 +412,10 @@ export default function States() {
                                             <div className="flex justify-end gap-1">
                                                 <Link
                                                     to={`/admin/locations/states/${state._id}/edit`}
-                                                    className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition hover:bg-blue-50 hover:text-blue-600"
+                                                     className="rounded-lg border border-gray-200 p-2.5 text-blue-600 transition hover:bg-blue-50"
                                                     title="Edit"
                                                 >
-                                                    <Edit size={16} />
+                                                    <Pencil size={16} />
                                                 </Link>
 
                                                 {/* <button
@@ -438,7 +439,7 @@ export default function States() {
                                                     onClick={() =>
                                                         setDeleteState(state)
                                                     }
-                                                    className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition hover:bg-red-50 hover:text-blue-600"
+                                                  className="rounded-lg border border-gray-200 p-2.5 text-red-600 transition hover:bg-red-50 disabled:opacity-50"
                                                     title="Delete"
                                                 >
                                                     <Trash2 size={16} />

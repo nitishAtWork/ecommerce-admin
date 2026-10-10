@@ -1,9 +1,11 @@
-import { useEffect } from "react";
+
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import JoditEditor from "jodit-react";
 import {
     ArrowLeft,
     Save,
@@ -15,9 +17,9 @@ import PageHeader from "../../components/common/PageHeader";
 import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
 import Textarea from "../../components/ui/Textarea";
+import editorConfig from "../../components/ui/EditorConfig";
 
 import natureOfBusinessService from "../../services/natureOfBusiness.service";
-
 
 /* =========================================================
    VALIDATION
@@ -33,46 +35,22 @@ const natureOfBusinessSchema = z.object({
     shortDescription: z
         .string()
         .trim()
-        .max(
-            500,
-            "Short description cannot exceed 500 characters."
-        )
+        .max(500, "Short description cannot exceed 500 characters.")
         .optional()
         .or(z.literal("")),
 
-    description: z
-        .string()
-        .trim()
-        .optional()
-        .or(z.literal("")),
+    description: z.string().optional().or(z.literal("")),
 
-    extraDescription: z
-        .string()
-        .trim()
-        .optional()
-        .or(z.literal("")),
+    extraDescription: z.string().optional().or(z.literal("")),
 
-    metaTitle: z
-        .string()
-        .trim()
-        .optional()
-        .or(z.literal("")),
+    metaTitle: z.string().trim().optional().or(z.literal("")),
 
-    metaDescription: z
-        .string()
-        .trim()
-        .optional()
-        .or(z.literal("")),
+    metaDescription: z.string().trim().optional().or(z.literal("")),
 
-    metaKeywords: z
-        .string()
-        .trim()
-        .optional()
-        .or(z.literal("")),
+    metaKeywords: z.string().trim().optional().or(z.literal("")),
 
     isActive: z.boolean(),
 });
-
 
 const defaultValues = {
     name: "",
@@ -85,7 +63,6 @@ const defaultValues = {
     isActive: true,
 };
 
-
 /* =========================================================
    COMPONENT
 ========================================================= */
@@ -93,26 +70,31 @@ const defaultValues = {
 export default function NatureOfBusinessForm() {
     const navigate = useNavigate();
     const { id } = useParams();
-
     const queryClient = useQueryClient();
 
     const isEdit = Boolean(id);
+
+    // Jodit editor refs
+    const descriptionEditor = useRef(null);
+    const extraDescriptionEditor = useRef(null);
+
+    // Editor values
+    const [description, setDescription] = useState("");
+    const [extraDescription, setExtraDescription] = useState("");
 
     const {
         register,
         handleSubmit,
         reset,
+        setValue,
         formState: {
             errors,
             isSubmitting,
         },
     } = useForm({
-        resolver: zodResolver(
-            natureOfBusinessSchema
-        ),
+        resolver: zodResolver(natureOfBusinessSchema),
         defaultValues,
     });
-
 
     /* =====================================================
        GET SINGLE
@@ -123,19 +105,11 @@ export default function NatureOfBusinessForm() {
         isLoading: isLoadingDetails,
         isError: isDetailsError,
     } = useQuery({
-        queryKey: [
-            "nature-of-business",
-            id,
-        ],
-
+        queryKey: ["nature-of-business", id],
         queryFn: () =>
-            natureOfBusinessService.getNatureOfBusinessById(
-                id
-            ),
-
+            natureOfBusinessService.getNatureOfBusinessById(id),
         enabled: isEdit,
     });
-
 
     /* =====================================================
        LOAD EDIT DATA
@@ -146,71 +120,60 @@ export default function NatureOfBusinessForm() {
             return;
         }
 
-        const nature =
-            data.natureOfBusiness;
+        const nature = data.natureOfBusiness;
+
+        const savedDescription = nature.description || "";
+        const savedExtraDescription = nature.extraDescription || "";
 
         reset({
             name: nature.name || "",
-            shortDescription:
-                nature.shortDescription || "",
-            description:
-                nature.description || "",
-            extraDescription:
-                nature.extraDescription || "",
-            metaTitle:
-                nature.metaTitle || "",
-            metaDescription:
-                nature.metaDescription || "",
-            metaKeywords:
-                nature.metaKeywords || "",
-            isActive:
-                nature.isActive ?? true,
+            shortDescription: nature.shortDescription || "",
+            description: savedDescription,
+            extraDescription: savedExtraDescription,
+            metaTitle: nature.metaTitle || "",
+            metaDescription: nature.metaDescription || "",
+            metaKeywords: nature.metaKeywords || "",
+            isActive: nature.isActive ?? true,
         });
-    }, [
-        isEdit,
-        data,
-        reset,
-    ]);
 
+        setDescription(savedDescription);
+        setExtraDescription(savedExtraDescription);
+    }, [isEdit, data, reset]);
 
     /* =====================================================
        CREATE
     ===================================================== */
 
+
     const createMutation = useMutation({
         mutationFn: (formData) =>
-            natureOfBusinessService.createNatureOfBusiness(
-                formData
-            ),
+            natureOfBusinessService.createNatureOfBusiness(formData),
 
         onSuccess: (response) => {
             toast.success(
                 response?.message ||
-                    "Nature of business created successfully."
+                "Nature of business created successfully."
             );
 
             queryClient.invalidateQueries({
-                queryKey: [
-                    "nature-of-businesses",
-                ],
+                queryKey: ["nature-of-businesses"],
             });
 
-            navigate(
-                "/admin/nature-of-business",
-                {
-                    replace: true,
-                }
-            );
+            // Reset all form fields
+            reset(defaultValues);
+
+            // Clear both Jodit editors
+            setDescription("");
+            setExtraDescription("");
         },
 
         onError: (error) => {
             toast.error(
                 error?.response?.data?.message ||
-                    "Failed to create nature of business."
+                "Failed to create nature of business."
             );
         },
     });
-
 
     /* =====================================================
        UPDATE
@@ -218,46 +181,57 @@ export default function NatureOfBusinessForm() {
 
     const updateMutation = useMutation({
         mutationFn: ({ id, data }) =>
-            natureOfBusinessService.updateNatureOfBusiness(
-                id,
-                data
-            ),
+            natureOfBusinessService.updateNatureOfBusiness(id, data),
 
         onSuccess: (response) => {
             toast.success(
                 response?.message ||
-                    "Nature of business updated successfully."
+                "Nature of business updated successfully."
             );
 
             queryClient.invalidateQueries({
-                queryKey: [
-                    "nature-of-businesses",
-                ],
+                queryKey: ["nature-of-businesses"],
             });
 
             queryClient.invalidateQueries({
-                queryKey: [
-                    "nature-of-business",
-                    id,
-                ],
+                queryKey: ["nature-of-business", id],
             });
 
-            navigate(
-                "/admin/nature-of-business",
-                {
-                    replace: true,
-                }
-            );
+            // Navigate only after a successful update
+            navigate("/admin/nature-of-business", {
+                replace: true,
+            });
         },
 
         onError: (error) => {
             toast.error(
                 error?.response?.data?.message ||
-                    "Failed to update nature of business."
+                "Failed to update nature of business."
             );
         },
     });
 
+    /* =====================================================
+       EDITOR HANDLERS
+    ===================================================== */
+
+    const handleDescriptionChange = (value) => {
+        setDescription(value);
+
+        setValue("description", value, {
+            shouldDirty: true,
+            shouldValidate: true,
+        });
+    };
+
+    const handleExtraDescriptionChange = (value) => {
+        setExtraDescription(value);
+
+        setValue("extraDescription", value, {
+            shouldDirty: true,
+            shouldValidate: true,
+        });
+    };
 
     /* =====================================================
        SUBMIT
@@ -270,20 +244,16 @@ export default function NatureOfBusinessForm() {
             shortDescription:
                 values.shortDescription?.trim() || "",
 
-            description:
-                values.description?.trim() || "",
+            description: description || values.description || "",
 
             extraDescription:
-                values.extraDescription?.trim() || "",
+                extraDescription || values.extraDescription || "",
 
-            metaTitle:
-                values.metaTitle?.trim() || "",
+            metaTitle: values.metaTitle?.trim() || "",
 
-            metaDescription:
-                values.metaDescription?.trim() || "",
+            metaDescription: values.metaDescription?.trim() || "",
 
-            metaKeywords:
-                values.metaKeywords?.trim() || "",
+            metaKeywords: values.metaKeywords?.trim() || "",
 
             isActive: values.isActive,
         };
@@ -298,12 +268,10 @@ export default function NatureOfBusinessForm() {
         }
     };
 
-
     const isSaving =
         createMutation.isPending ||
         updateMutation.isPending ||
         isSubmitting;
-
 
     /* =====================================================
        LOADING EDIT
@@ -320,7 +288,6 @@ export default function NatureOfBusinessForm() {
         );
     }
 
-
     /* =====================================================
        ERROR EDIT
     ===================================================== */
@@ -336,9 +303,7 @@ export default function NatureOfBusinessForm() {
                     variant="secondary"
                     className="mt-4"
                     onClick={() =>
-                        navigate(
-                            "/admin/nature-of-business"
-                        )
+                        navigate("/admin/nature-of-business")
                     }
                 >
                     <ArrowLeft size={17} />
@@ -348,6 +313,9 @@ export default function NatureOfBusinessForm() {
         );
     }
 
+    /* =====================================================
+       UI
+    ===================================================== */
 
     return (
         <div>
@@ -367,9 +335,7 @@ export default function NatureOfBusinessForm() {
                         type="button"
                         variant="secondary"
                         onClick={() =>
-                            navigate(
-                                "/admin/nature-of-business"
-                            )
+                            navigate("/admin/nature-of-business")
                         }
                     >
                         <ArrowLeft size={17} />
@@ -382,9 +348,7 @@ export default function NatureOfBusinessForm() {
                 onSubmit={handleSubmit(onSubmit)}
                 className="space-y-6"
             >
-                {/* =================================================
-                    BASIC INFORMATION
-                ================================================= */}
+                {/* BUSINESS INFORMATION */}
 
                 <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
                     <div className="border-b border-slate-200 px-5 py-4">
@@ -393,8 +357,8 @@ export default function NatureOfBusinessForm() {
                         </h2>
 
                         <p className="mt-1 text-sm text-slate-500">
-                            Enter the basic information for this
-                            nature of business.
+                            Enter the basic information for this nature
+                            of business.
                         </p>
                     </div>
 
@@ -404,9 +368,7 @@ export default function NatureOfBusinessForm() {
                             name="name"
                             placeholder="Enter nature of business name"
                             required
-                            error={
-                                errors.name?.message
-                            }
+                            error={errors.name?.message}
                             {...register("name")}
                         />
 
@@ -415,49 +377,68 @@ export default function NatureOfBusinessForm() {
                             name="shortDescription"
                             placeholder="Enter a short description"
                             rows={3}
-                            error={
-                                errors.shortDescription
-                                    ?.message
-                            }
-                            {...register(
-                                "shortDescription"
-                            )}
+                            error={errors.shortDescription?.message}
+                            {...register("shortDescription")}
                         />
 
-                        <Textarea
-                            label="Description"
-                            name="description"
-                            placeholder="Enter description"
-                            rows={7}
-                            error={
-                                errors.description
-                                    ?.message
-                            }
-                            {...register(
-                                "description"
-                            )}
-                        />
+                        {/* DESCRIPTION EDITOR */}
 
-                        <Textarea
-                            label="Extra Description"
-                            name="extraDescription"
-                            placeholder="Enter additional description"
-                            rows={6}
-                            error={
-                                errors.extraDescription
-                                    ?.message
-                            }
-                            {...register(
-                                "extraDescription"
+                        <div>
+                            <label className="mb-2 block text-sm font-medium text-slate-700">
+                                Description
+                            </label>
+
+                            <div className="overflow-hidden rounded-lg border border-slate-200">
+                                <JoditEditor
+                                    ref={descriptionEditor}
+                                    value={description}
+                                    config={editorConfig}
+                                    onBlur={handleDescriptionChange}
+                                />
+                            </div>
+
+                            {errors.description?.message && (
+                                <p className="mt-1 text-sm text-red-600">
+                                    {errors.description.message}
+                                </p>
                             )}
-                        />
+
+                            <p className="mt-1 text-xs text-slate-500">
+                                Use the editor toolbar to format your
+                                description.
+                            </p>
+                        </div>
+
+                        {/* EXTRA DESCRIPTION EDITOR */}
+
+                        <div>
+                            <label className="mb-2 block text-sm font-medium text-slate-700">
+                                Extra Description
+                            </label>
+
+                            <div className="overflow-hidden rounded-lg border border-slate-200">
+                                <JoditEditor
+                                    ref={extraDescriptionEditor}
+                                    value={extraDescription}
+                                    config={editorConfig}
+                                    onBlur={handleExtraDescriptionChange}
+                                />
+                            </div>
+
+                            {errors.extraDescription?.message && (
+                                <p className="mt-1 text-sm text-red-600">
+                                    {errors.extraDescription.message}
+                                </p>
+                            )}
+
+                            <p className="mt-1 text-xs text-slate-500">
+                                Add any additional formatted content here.
+                            </p>
+                        </div>
                     </div>
                 </section>
 
-
-                {/* =================================================
-                    SEO
-                ================================================= */}
+                {/* SEO SETTINGS */}
 
                 <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
                     <div className="border-b border-slate-200 px-5 py-4">
@@ -475,13 +456,8 @@ export default function NatureOfBusinessForm() {
                             label="Meta Title"
                             name="metaTitle"
                             placeholder="Enter SEO title"
-                            error={
-                                errors.metaTitle
-                                    ?.message
-                            }
-                            {...register(
-                                "metaTitle"
-                            )}
+                            error={errors.metaTitle?.message}
+                            {...register("metaTitle")}
                         />
 
                         <Textarea
@@ -489,13 +465,8 @@ export default function NatureOfBusinessForm() {
                             name="metaDescription"
                             placeholder="Enter SEO description"
                             rows={4}
-                            error={
-                                errors.metaDescription
-                                    ?.message
-                            }
-                            {...register(
-                                "metaDescription"
-                            )}
+                            error={errors.metaDescription?.message}
+                            {...register("metaDescription")}
                         />
 
                         <Textarea
@@ -503,21 +474,13 @@ export default function NatureOfBusinessForm() {
                             name="metaKeywords"
                             placeholder="keyword 1, keyword 2, keyword 3"
                             rows={3}
-                            error={
-                                errors.metaKeywords
-                                    ?.message
-                            }
-                            {...register(
-                                "metaKeywords"
-                            )}
+                            error={errors.metaKeywords?.message}
+                            {...register("metaKeywords")}
                         />
                     </div>
                 </section>
 
-
-                {/* =================================================
-                    STATUS
-                ================================================= */}
+                {/* STATUS */}
 
                 <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
                     <div className="border-b border-slate-200 px-5 py-4">
@@ -526,8 +489,8 @@ export default function NatureOfBusinessForm() {
                         </h2>
 
                         <p className="mt-1 text-sm text-slate-500">
-                            Configure the visibility of this
-                            nature of business.
+                            Configure the visibility of this nature of
+                            business.
                         </p>
                     </div>
 
@@ -539,30 +502,25 @@ export default function NatureOfBusinessForm() {
                                 </p>
 
                                 <p className="mt-1 text-xs text-slate-500">
-                                    Customers can see this
-                                    entry when it is active.
+                                    Customers can see this entry when it
+                                    is active.
                                 </p>
                             </div>
 
-                            <label className="relative inline-flex cursor-pointer items-center">
+                            <span className="relative inline-flex items-center">
                                 <input
                                     type="checkbox"
                                     className="peer sr-only"
-                                    {...register(
-                                        "isActive"
-                                    )}
+                                    {...register("isActive")}
                                 />
 
-                                <div className="h-6 w-11 rounded-full bg-slate-300 transition peer-checked:bg-blue-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 peer-focus:ring-offset-2 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow-sm after:transition-all peer-checked:after:translate-x-5" />
-                            </label>
+                                <span className="h-6 w-11 rounded-full bg-slate-300 transition peer-checked:bg-blue-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 peer-focus:ring-offset-2 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow-sm after:transition-all peer-checked:after:translate-x-5" />
+                            </span>
                         </label>
                     </div>
                 </section>
 
-
-                {/* =================================================
-                    ACTIONS
-                ================================================= */}
+                {/* ACTIONS */}
 
                 <div className="sticky bottom-0 z-30 -mx-4 mt-8 border-t border-slate-200 bg-white/95 px-4 py-4 backdrop-blur-md sm:-mx-6 sm:px-6">
                     <div className="flex flex-col-reverse justify-end gap-3 sm:flex-row">
@@ -571,9 +529,7 @@ export default function NatureOfBusinessForm() {
                             variant="secondary"
                             disabled={isSaving}
                             onClick={() =>
-                                navigate(
-                                    "/admin/nature-of-business"
-                                )
+                                navigate("/admin/nature-of-business")
                             }
                         >
                             Cancel

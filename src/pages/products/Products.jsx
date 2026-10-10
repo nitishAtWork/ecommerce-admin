@@ -544,7 +544,7 @@ function ProductRow({
               setMenuOpen(false);
               onEdit(product._id);
             }}
-            className="flex w-full cursor-pointer items-center py-2 text-sm text-slate-700 hover:bg-slate-50"
+               className="rounded-lg border border-gray-200 p-2.5 text-blue-600 transition hover:bg-blue-50"
           >
             <Pencil size={18} />
           </button>
@@ -557,7 +557,7 @@ function ProductRow({
               setMenuOpen(false);
               onDelete(product);
             }}
-            className="flex cursor-pointer items-center py-2 text-sm text-red-600 hover:bg-red-50"
+            className="rounded-lg border border-gray-200 p-2.5 text-red-600 transition hover:bg-red-50 disabled:opacity-50"
           >
             <Trash2 size={18} />
           </button>

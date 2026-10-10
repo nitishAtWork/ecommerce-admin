@@ -1,12 +1,19 @@
+
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { FiSave, FiRefreshCw } from "react-icons/fi";
 import { toast } from "sonner";
+import JoditEditor from "jodit-react";
 
 import keywordInCityService from "../../services/keywordInCity.service";
+import editorConfig from "../../components/ui/EditorConfig";
 
 const defaultValues = {
   name: "",
@@ -21,10 +28,19 @@ const defaultValues = {
 export default function KeywordInCity() {
   const queryClient = useQueryClient();
 
+  // Jodit editor references
+  const descriptionEditor = useRef(null);
+  const extraDescriptionEditor = useRef(null);
+
+  // Rich-text editor state
+  const [description, setDescription] = useState("");
+  const [extraDescription, setExtraDescription] = useState("");
+
   const {
     register,
     handleSubmit,
     reset,
+    setValue,
   } = useForm({
     defaultValues,
   });
@@ -34,31 +50,41 @@ export default function KeywordInCity() {
     isLoading,
     isError,
     error,
+    refetch,
+    isFetching,
   } = useQuery({
     queryKey: ["keyword-in-city"],
     queryFn: keywordInCityService.get,
   });
 
+  // Populate form fields when data is loaded
   useEffect(() => {
-    if (data?.keywordInCity) {
-      reset({
-        name: data.keywordInCity.name || "",
-        shortDescription: data.keywordInCity.shortDescription || "",
-        description: data.keywordInCity.description || "",
-        extraDescription: data.keywordInCity.extraDescription || "",
-        metaTitle: data.keywordInCity.metaTitle || "",
-        metaDescription: data.keywordInCity.metaDescription || "",
-        metaKeywords: data.keywordInCity.metaKeywords || "",
-      });
-    }
+    if (!data?.keywordInCity) return;
+
+    const item = data.keywordInCity;
+
+    reset({
+      name: item.name || "",
+      shortDescription: item.shortDescription || "",
+      description: item.description || "",
+      extraDescription: item.extraDescription || "",
+      metaTitle: item.metaTitle || "",
+      metaDescription: item.metaDescription || "",
+      metaKeywords: item.metaKeywords || "",
+    });
+
+    setDescription(item.description || "");
+    setExtraDescription(item.extraDescription || "");
   }, [data, reset]);
 
+  // Update API mutation
   const updateMutation = useMutation({
     mutationFn: keywordInCityService.update,
 
     onSuccess: (response) => {
       toast.success(
-        response?.message || "Keyword in city content updated successfully"
+        response?.message ||
+          "Keyword in city content updated successfully"
       );
 
       queryClient.invalidateQueries({
@@ -75,7 +101,28 @@ export default function KeywordInCity() {
   });
 
   const onSubmit = (values) => {
-    updateMutation.mutate(values);
+    updateMutation.mutate({
+      ...values,
+      description,
+      extraDescription,
+    });
+  };
+
+  const handleReset = () => {
+    const item = data?.keywordInCity;
+
+    reset({
+      name: item?.name || "",
+      shortDescription: item?.shortDescription || "",
+      description: item?.description || "",
+      extraDescription: item?.extraDescription || "",
+      metaTitle: item?.metaTitle || "",
+      metaDescription: item?.metaDescription || "",
+      metaKeywords: item?.metaKeywords || "",
+    });
+
+    setDescription(item?.description || "");
+    setExtraDescription(item?.extraDescription || "");
   };
 
   if (isLoading) {
@@ -97,6 +144,18 @@ export default function KeywordInCity() {
           {error?.response?.data?.message ||
             "Unable to load keyword in city content."}
         </p>
+
+        <button
+          type="button"
+          onClick={() => refetch()}
+          disabled={isFetching}
+          className="mt-4 inline-flex items-center gap-2 rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-50"
+        >
+          <FiRefreshCw
+            className={isFetching ? "animate-spin" : ""}
+          />
+          Retry
+        </button>
       </div>
     );
   }
@@ -104,7 +163,6 @@ export default function KeywordInCity() {
   return (
     <div className="min-h-screen bg-slate-50 p-4 md:p-6">
       <div className="mx-auto max-w-6xl">
-
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-slate-900">
@@ -112,16 +170,14 @@ export default function KeywordInCity() {
           </h1>
 
           <p className="mt-1 text-sm text-slate-500">
-            Manage the reusable content template used for keyword location
-            pages.
+            Manage the reusable content template used for keyword
+            location pages.
           </p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)}>
-
           {/* Main Content */}
           <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-
             <div className="border-b border-slate-200 px-5 py-4">
               <h2 className="font-semibold text-slate-900">
                 Content
@@ -134,7 +190,6 @@ export default function KeywordInCity() {
             </div>
 
             <div className="grid gap-6 p-5">
-
               {/* Name */}
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">
@@ -148,7 +203,7 @@ export default function KeywordInCity() {
                 />
               </div>
 
-              {/* Short Description */}
+              {/* Short Description - Normal Textarea */}
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">
                   Short Description
@@ -162,42 +217,58 @@ export default function KeywordInCity() {
                 />
               </div>
 
-              {/* Description */}
+              {/* Description - Jodit Editor */}
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">
                   Description
                 </label>
 
-                <textarea
-                  {...register("description")}
-                  rows={7}
-                  placeholder="Enter description"
-                  className="w-full rounded-lg border border-slate-300 px-4 py-2.5 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                />
+                <div className="overflow-hidden rounded-lg border border-slate-300 bg-white">
+                  <JoditEditor
+                    ref={descriptionEditor}
+                    value={description}
+                    config={editorConfig}
+                    onBlur={(value) => {
+                      setDescription(value);
+
+                      setValue("description", value, {
+                        shouldDirty: true,
+                      });
+                    }}
+                  />
+                </div>
               </div>
 
-              {/* Extra Description */}
+              {/* Extra Description - Jodit Editor */}
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">
                   Extra Description
                 </label>
 
-                <textarea
-                  {...register("extraDescription")}
-                  rows={7}
-                  placeholder="Enter extra description"
-                  className="w-full rounded-lg border border-slate-300 px-4 py-2.5 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                />
+                <div className="overflow-hidden rounded-lg border border-slate-300 bg-white">
+                  <JoditEditor
+                    ref={extraDescriptionEditor}
+                    value={extraDescription}
+                    config={editorConfig}
+                    onBlur={(value) => {
+                      setExtraDescription(value);
+
+                      setValue("extraDescription", value, {
+                        shouldDirty: true,
+                      });
+                    }}
+                  />
+                </div>
               </div>
 
-              {/* SEO */}
+              {/* SEO Settings */}
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-5">
                 <h3 className="mb-4 text-base font-semibold text-slate-900">
                   SEO Settings
                 </h3>
 
                 <div className="grid gap-5">
-
+                  {/* Meta Title */}
                   <div>
                     <label className="mb-2 block text-sm font-medium text-slate-700">
                       Meta Title
@@ -210,6 +281,7 @@ export default function KeywordInCity() {
                     />
                   </div>
 
+                  {/* Meta Description */}
                   <div>
                     <label className="mb-2 block text-sm font-medium text-slate-700">
                       Meta Description
@@ -223,6 +295,7 @@ export default function KeywordInCity() {
                     />
                   </div>
 
+                  {/* Meta Keywords */}
                   <div>
                     <label className="mb-2 block text-sm font-medium text-slate-700">
                       Meta Keywords
@@ -235,7 +308,6 @@ export default function KeywordInCity() {
                       className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                     />
                   </div>
-
                 </div>
               </div>
             </div>
@@ -244,31 +316,13 @@ export default function KeywordInCity() {
           {/* Sticky Actions */}
           <div className="sticky bottom-0 z-20 mt-6 rounded-xl border border-slate-200 bg-white/95 p-4 shadow-lg backdrop-blur">
             <div className="flex items-center justify-end gap-3">
-
               <button
                 type="button"
-                onClick={() => {
-                  if (data?.keywordInCity) {
-                    reset({
-                      name: data.keywordInCity.name || "",
-                      shortDescription:
-                        data.keywordInCity.shortDescription || "",
-                      description:
-                        data.keywordInCity.description || "",
-                      extraDescription:
-                        data.keywordInCity.extraDescription || "",
-                      metaTitle:
-                        data.keywordInCity.metaTitle || "",
-                      metaDescription:
-                        data.keywordInCity.metaDescription || "",
-                      metaKeywords:
-                        data.keywordInCity.metaKeywords || "",
-                    });
-                  }
-                }}
+                onClick={handleReset}
                 disabled={updateMutation.isPending}
-                className="rounded-lg border border-slate-300 px-5 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+                className="flex items-center gap-2 rounded-lg border border-slate-300 px-5 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
               >
+                <FiRefreshCw />
                 Reset
               </button>
 
@@ -283,7 +337,6 @@ export default function KeywordInCity() {
                   ? "Saving..."
                   : "Save Changes"}
               </button>
-
             </div>
           </div>
         </form>

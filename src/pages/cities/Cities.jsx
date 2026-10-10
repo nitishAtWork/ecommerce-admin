@@ -11,6 +11,7 @@ import {
     Trash2,
     MapPin,
     Loader2,
+    Pencil,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
@@ -556,14 +557,14 @@ export default function Cities() {
                                                         toggleMutation.isPending
                                                     }
                                                     className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${city.isActive
-                                                            ? "bg-green-600"
-                                                            : "bg-slate-300"
+                                                        ? "bg-green-600"
+                                                        : "bg-slate-300"
                                                         }`}
                                                 >
                                                     <span
                                                         className={`inline-block h-5 w-5 rounded-full bg-white shadow-sm transition-transform duration-200 ${city.isActive
-                                                                ? "translate-x-5"
-                                                                : "translate-x-0.5"
+                                                            ? "translate-x-5"
+                                                            : "translate-x-0.5"
                                                             }`}
                                                     />
                                                 </button>
@@ -574,10 +575,10 @@ export default function Cities() {
                                                 <div className="flex justify-end gap-1">
                                                     <Link
                                                         to={`/admin/locations/cities/${city._id}/edit`}
-                                                        className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition hover:bg-blue-50 hover:text-blue-600"
+                                                        className="rounded-lg border border-gray-200 p-2.5 text-blue-600 transition hover:bg-blue-50"
                                                         title="Edit"
                                                     >
-                                                        <Edit
+                                                        <Pencil
                                                             size={
                                                                 16
                                                             }
@@ -591,7 +592,7 @@ export default function Cities() {
                                                                 city
                                                             )
                                                         }
-                                                        className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition hover:bg-red-50 hover:text-red-600"
+                                                        className="rounded-lg border border-gray-200 p-2.5 text-red-600 transition hover:bg-red-50 disabled:opacity-50"
                                                         title="Delete"
                                                     >
                                                         <Trash2

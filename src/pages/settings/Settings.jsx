@@ -38,6 +38,7 @@ import websiteService from "../../services/website.service";
 import {
     getImageUrl,
 } from "../../utils/getImageUrl";
+import { useAuth } from "../../context/AuthContext";
 
 
 /*
@@ -193,6 +194,13 @@ const websiteSchema = z.object({
 
 
 function Settings() {
+
+     const {
+        isAuthenticated,
+        loading,
+        isSuperAdmin,
+      } = useAuth();
+
     const queryClient =
         useQueryClient();
 
@@ -1074,7 +1082,7 @@ function Settings() {
 
                     <Input
                         label="API ID"
-                        disabled
+                        disabled={!isSuperAdmin}
                         value={
                             data?.data?.website
                                 ?.apiId ||

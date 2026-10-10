@@ -151,4 +151,15 @@ export const API_ENDPOINTS = {
         TOGGLE_READ: (id) => `/enquiries/${id}/toggle-read`,
     },
 
+    PAGES: {
+        LIST: "/pages",
+        FRONTEND: "/pages/frontend",
+        GET: (id) => `/pages/by-id/${id}`,
+        GET_BY_SLUG: (slug) => `/pages/${encodeURIComponent(slug)}`,
+        CREATE: "/pages",
+        UPDATE: (id) => `/pages/${id}`,
+        DELETE: (id) => `/pages/${id}`,
+        TOGGLE_STATUS: (id) => `/pages/${id}/toggle-status`,
+    },
+
 };

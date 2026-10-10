@@ -663,7 +663,7 @@ function KeywordRow({
                                 keyword._id
                             )
                         }
-                        className="flex cursor-pointer items-center py-2 text-sm text-slate-700 hover:text-blue-600"
+                         className="rounded-lg border border-gray-200 p-2.5 text-blue-600 transition hover:bg-blue-50"
                     >
                         <Pencil size={18} />
                     </button>
@@ -675,7 +675,7 @@ function KeywordRow({
                         onClick={() =>
                             onDelete(keyword)
                         }
-                        className="flex cursor-pointer items-center py-2 text-red-600 hover:text-red-700"
+                         className="rounded-lg border border-gray-200 p-2.5 text-red-600 transition hover:bg-red-50 disabled:opacity-50"
                     >
                         <Trash2 size={18} />
                     </button>

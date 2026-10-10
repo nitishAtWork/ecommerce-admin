@@ -17,6 +17,7 @@ import {
     BriefcaseBusiness,
     MapPinned,
     ContactIcon,
+    File,
 } from "lucide-react";
 import { FaSearchLocation } from "react-icons/fa";
 
@@ -31,6 +32,12 @@ const menuItems = [
         icon: LayoutDashboard,
         path: "/admin",
         end: true,
+        roles: ["ADMIN", "SUPERADMIN"],
+    },
+    {
+        label: "Settings",
+        icon: Settings,
+        path: "/admin/settings",
         roles: ["ADMIN", "SUPERADMIN"],
     },
     {
@@ -68,6 +75,12 @@ const menuItems = [
         ],
     },
     {
+        label: "Pages",
+        icon: File,
+        path: "/admin/pages",
+        roles: ["ADMIN", "SUPERADMIN"],
+    },
+    {
         label: "Business Nature",
         icon: BriefcaseBusiness,
         path: "/admin/nature-of-business",
@@ -101,12 +114,6 @@ const menuItems = [
         label: "Reviews",
         icon: StarCheck,
         path: "/admin/reviews",
-        roles: ["ADMIN", "SUPERADMIN"],
-    },
-    {
-        label: "Settings",
-        icon: Settings,
-        path: "/admin/settings",
         roles: ["ADMIN", "SUPERADMIN"],
     },
     {

@@ -1,10 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import {
     useMutation,
     useQuery,
     useQueryClient,
 } from "@tanstack/react-query";
+import JoditEditor from "jodit-react";
+import editorConfig from "../../components/ui/EditorConfig";
 
 import {
     FiImage,
@@ -32,6 +34,12 @@ const defaultValues = {
 export default function OurPresence() {
     const queryClient = useQueryClient();
 
+    const descriptionEditor = useRef(null);
+    const extraDescriptionEditor = useRef(null);
+
+    const [description, setDescription] = useState("");
+    const [extraDescription, setExtraDescription] = useState("");
+
     const [mainImage, setMainImage] = useState(null);
     const [mainPreview, setMainPreview] = useState("");
     const [removeMainImage, setRemoveMainImage] = useState(false);
@@ -46,6 +54,7 @@ export default function OurPresence() {
         register,
         handleSubmit,
         reset,
+        setValue,
     } = useForm({
         defaultValues,
     });
@@ -89,6 +98,9 @@ export default function OurPresence() {
 
         setMainPreview(item.img || "");
         setRemoveMainImage(false);
+
+        setDescription(item.description || "");
+        setExtraDescription(item.extraDescription || "");
 
         setGalleryImages([]);
 
@@ -355,6 +367,9 @@ export default function OurPresence() {
                 item.metaKeywords || "",
         });
 
+        setDescription(item.description || "");
+        setExtraDescription(item.extraDescription || "");
+
         setMainImage(null);
 
         setGalleryImages([]);
@@ -490,11 +505,17 @@ export default function OurPresence() {
                                     Description
                                 </label>
 
-                                <textarea
-                                    {...register("description")}
-                                    rows={7}
-                                    placeholder="Enter description"
-                                    className="w-full rounded-lg border border-slate-300 px-4 py-2.5 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                <JoditEditor
+                                    ref={descriptionEditor}
+                                    value={description}
+                                    config={editorConfig}
+                                    onBlur={(value) => {
+                                        setDescription(value);
+
+                                        setValue("description", value, {
+                                            shouldDirty: true,
+                                        });
+                                    }}
                                 />
                             </div>
 
@@ -506,11 +527,17 @@ export default function OurPresence() {
                                     Extra Description
                                 </label>
 
-                                <textarea
-                                    {...register("extraDescription")}
-                                    rows={7}
-                                    placeholder="Enter extra description"
-                                    className="w-full rounded-lg border border-slate-300 px-4 py-2.5 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                <JoditEditor
+                                    ref={extraDescriptionEditor}
+                                    value={extraDescription}
+                                    config={editorConfig}
+                                    onBlur={(value) => {
+                                        setExtraDescription(value);
+
+                                        setValue("extraDescription", value, {
+                                            shouldDirty: true,
+                                        });
+                                    }}
                                 />
                             </div>
 

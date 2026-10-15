@@ -10,7 +10,8 @@ import {
     ChevronLeft,
     ChevronRight,
     RefreshCw,
-    Pencil
+    ShieldCheck,
+    Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -19,7 +20,9 @@ import {
     useMutation,
     useQueryClient,
 } from "@tanstack/react-query";
+import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import adminService from "../../services/admin.service";
 
 import PageHeader from "../../components/common/PageHeader";
 import useDebounce from "../../hooks/useDebounce";
@@ -68,6 +71,44 @@ const Customers = () => {
                 );
             },
         });
+
+    const toggleRoleMutation = useMutation({
+        mutationFn: ({ customerId, role }) =>
+            adminService.toggleAdminRole(customerId, role),
+
+        onSuccess: (response) => {
+            toast.success(
+                response?.message || "Customer promoted to admin successfully."
+            );
+
+            queryClient.invalidateQueries({ queryKey: ["customers"] });
+            queryClient.invalidateQueries({ queryKey: ["admins"] });
+        },
+
+        onError: (error) => {
+            toast.error(
+                error?.response?.data?.message ||
+                "Failed to update customer role."
+            );
+        },
+    });
+
+    const handleMakeAdmin = (customer) => {
+        const name =
+            customer.name ||
+            customer.fullName ||
+            customer.email ||
+            "this customer";
+
+        if (!window.confirm(`Make ${name} an admin?`)) {
+            return;
+        }
+
+        toggleRoleMutation.mutate({
+            customerId: customer._id,
+            role: "USER",
+        });
+    };
 
     const [page, setPage] = useState(1);
 
@@ -330,19 +371,19 @@ const Customers = () => {
                                             key={customer._id}
                                             customer={customer}
                                             onView={() =>
-                                                navigate(
-                                                    `/admin/customers/${customer._id}`
-                                                )
+                                                navigate(`/admin/customers/${customer._id}`)
                                             }
                                             onToggleStatus={() =>
-                                                toggleStatusMutation.mutate(
-                                                    customer._id
-                                                )
+                                                toggleStatusMutation.mutate(customer._id)
                                             }
                                             isTogglePending={
                                                 toggleStatusMutation.isPending &&
-                                                toggleStatusMutation.variables ===
-                                                customer._id
+                                                toggleStatusMutation.variables === customer._id
+                                            }
+                                            onMakeAdmin={() => handleMakeAdmin(customer)}
+                                            isRolePending={
+                                                toggleRoleMutation.isPending &&
+                                                toggleRoleMutation.variables?.customerId === customer._id
                                             }
                                         />
                                     )
@@ -454,9 +495,15 @@ function CustomerRow({
     onView,
     onToggleStatus,
     isTogglePending,
+    onMakeAdmin,
+    isRolePending,
 }) {
 
     const navigate = useNavigate();
+
+    const {
+        user
+    } = useAuth();
 
     const name =
         customer.name ||
@@ -544,6 +591,30 @@ function CustomerRow({
 
             {/* Action */}
             <td className="px-5 py-4 text-right">
+
+                {
+                    user.role == "SUPERADMIN" &&
+                    customer.role !== "ADMIN" &&
+                    (
+                        <button
+                            type="button"
+                            onClick={onMakeAdmin}
+                            disabled={isRolePending}
+                            className="inline-flex mr-1.5 items-center gap-1.5 rounded-lg border border-blue-200 px-3 py-2 text-xs font-semibold text-blue-600 transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            {isRolePending ? (
+                                <RefreshCw
+                                    size={14}
+                                    className="animate-spin"
+                                />
+                            ) : (
+                                <ShieldCheck size={14} />
+                            )}
+
+                            Make Admin
+                        </button>
+                    )}
+
                 <button
                     type="button"
                     onClick={onView}
@@ -667,10 +738,9 @@ function StatusToggle({
                     transition-colors
                     duration-200
                     ease-in-out
-                    ${
-                        isActive
-                            ? "bg-emerald-500"
-                            : "bg-slate-300"
+                    ${isActive
+                        ? "bg-emerald-500"
+                        : "bg-slate-300"
                     }
                 `}
             >
@@ -687,10 +757,9 @@ function StatusToggle({
                         transition-transform
                         duration-200
                         ease-in-out
-                        ${
-                            isActive
-                                ? "translate-x-5"
-                                : "translate-x-0"
+                        ${isActive
+                            ? "translate-x-5"
+                            : "translate-x-0"
                         }
                     `}
                 />
@@ -700,10 +769,9 @@ function StatusToggle({
             <span
                 className={`
                     text-xs font-semibold
-                    ${
-                        isActive
-                            ? "text-emerald-600"
-                            : "text-slate-500"
+                    ${isActive
+                        ? "text-emerald-600"
+                        : "text-slate-500"
                     }
                 `}
             >

@@ -18,6 +18,7 @@ import {
     MapPinned,
     ContactIcon,
     File,
+    UserCheck,
 } from "lucide-react";
 import { FaSearchLocation } from "react-icons/fa";
 
@@ -111,6 +112,12 @@ const menuItems = [
         roles: ["ADMIN", "SUPERADMIN"],
     },
     {
+        label: "Admins",
+        icon: Users,
+        path: "/admin/admins",
+        roles: ["SUPERADMIN"],
+    },
+    {
         label: "Reviews",
         icon: StarCheck,
         path: "/admin/reviews",
@@ -121,6 +128,28 @@ const menuItems = [
         icon: ContactIcon,
         path: "/admin/enquiries",
         roles: ["ADMIN", "SUPERADMIN"],
+    },
+    {
+        label: "Account & Security",
+        icon: UserCheck,
+        roles: ["ADMIN", "SUPERADMIN"],
+        children: [
+            {
+                label: "Active Sessions",
+                path: "/admin/account/active-sessions",
+                roles: ["ADMIN", "SUPERADMIN"],
+            },
+            {
+                label: "Login Activity",
+                path: "/admin/account/login-activity",
+                roles: ["ADMIN", "SUPERADMIN"],
+            },
+            {
+                label: "Change Password",
+                path: "/admin/account/change-password",
+                roles: ["ADMIN", "SUPERADMIN"],
+            },
+        ],
     },
 ];
 

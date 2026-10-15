@@ -45,6 +45,10 @@ import KeywordForm from "../pages/keywords/KeywordForm";
 import ProductForm from "../pages/products/ProductForm";
 import Pages from "../pages/pages/Pages";
 import PageForm from "../pages/pages/PageForm";
+import ActiveSessions from "../pages/settings/ActiveSessions";
+import ChangePassword from "../pages/settings/ChangePassword";
+import LoginActivity from "../pages/settings/LoginActivity";
+import Admins from "../pages/admin/Admins";
 
 function AppRoutes() {
     return (
@@ -237,39 +241,52 @@ function AppRoutes() {
                     />
 
                     <Route
-                        path="/admin/customers/:id"
+                        path="admins"
+                        element={<Admins />}
+                    />
+
+                   
+                    <Route
+                        path="admins/:id"
                         element={<CustomerDetail />}
                     />
 
                     <Route
-                        path="/admin/customers/:id/edit"
+                        path="customers/:id"
+                        element={<CustomerDetail />}
+                    />
+
+                    <Route
+                        path="customers/:id/edit"
                         element={<CustomerEdit />}
                     />
 
                     <Route
-                        path="/admin/reviews"
+                        path="reviews"
                         element={<Reviews />}
                     />
 
                     <Route
-                        path="/admin/reviews/:id"
+                        path="reviews/:id"
                         element={<ReviewDetail />}
                     />
 
-                    {/* Future routes */}
-
-                    {/* 
-
-                    <Route
-                        path="reports"
-                        element={<Reports />}
-                    />
-
-                  
-                    */}
                     <Route
                         path="settings"
                         element={<Settings />}
+                    />
+                    <Route
+                        path="account/active-sessions"
+                        element={<ActiveSessions />}
+                    />
+                    <Route
+                        path="account/change-password"
+                        element={<ChangePassword />}
+                    />
+
+                    <Route
+                        path="account/login-activity"
+                        element={<LoginActivity />}
                     />
                 </Route>
             </Route>

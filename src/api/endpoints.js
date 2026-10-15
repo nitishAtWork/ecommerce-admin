@@ -4,6 +4,13 @@ export const API_ENDPOINTS = {
         LOGOUT: "/auth/logout",
         REFRESH: "/auth/refresh",
         ME: "/auth/me",
+        SEND_LOGIN_OTP: "/auth/login/send-otp",
+        VERIFY_LOGIN_OTP: "/auth/login/verify-otp",
+        CHANGE_PASSWORD: "/auth/change-password",
+
+        LOGOUT_ALL_DEVICES: "/auth/logout-all",
+        ACTIVE_SESSIONS: "/auth/sessions",
+        LOGIN_ACTIVITY: "/auth/login-activity",
     },
 
     PRODUCTS: {
@@ -51,15 +58,26 @@ export const API_ENDPOINTS = {
 
     CUSTOMERS: {
         LIST: "/users/admin",
-
         GET: (id) =>
             `/users/admin/${id}`,
-
         UPDATE: (id) =>
             `/users/admin/${id}`,
-
         TOGGLE_STATUS: (id) =>
             `/users/admin/${id}/toggle-status`,
+        TOGGLE_ROLE: (id) =>
+            `/users/admin/${id}/role`,
+    },
+
+    ADMINS: {
+        LIST: "/users/admin/admins",
+        GET: (id) =>
+            `/users/admin/${id}`,
+        UPDATE: (id) =>
+            `/users/admin/${id}`,
+        TOGGLE_STATUS: (id) =>
+            `/users/admin/${id}/toggle-admin-status`,
+        TOGGLE_ROLE: (id) =>
+            `/users/admin/${id}/role`,
     },
 
     WEBSITE: {

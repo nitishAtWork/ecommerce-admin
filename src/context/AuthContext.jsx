@@ -193,6 +193,69 @@ const AuthProvider = ({ children }) => {
   };
 
   /*
+ * Send login OTP
+ */
+  const sendLoginOTP = async (email) => {
+    const response = await apiClient.post(
+      API_ENDPOINTS.AUTH.SEND_LOGIN_OTP,
+      {
+        email: email.trim(),
+      }
+    );
+
+    return response.data;
+  };
+
+  /*
+   * Shared authentication handler for OTP login
+   */
+  const loginWithOTP = async ({ email, otp }) => {
+    const response = await apiClient.post(
+      API_ENDPOINTS.AUTH.VERIFY_LOGIN_OTP,
+      {
+        email: email.trim(),
+        otp,
+      }
+    );
+
+    const data = response.data;
+
+    const token =
+      data.token ||
+      data.accessToken ||
+      data.data?.token ||
+      data.data?.accessToken;
+
+    const loggedInUser =
+      data.user ||
+      data.data?.user;
+
+    if (!token) {
+      throw new Error(
+        "Authentication token was not returned."
+      );
+    }
+
+    // Validate admin permissions before saving the token.
+    if (!isAdminUser(loggedInUser)) {
+      throw new Error(
+        "You do not have permission to access the admin panel."
+      );
+    }
+
+    localStorage.setItem("adminToken", token);
+
+    localStorage.setItem(
+      "adminUser",
+      JSON.stringify(loggedInUser)
+    );
+
+    setUser(loggedInUser);
+
+    return data;
+  };
+
+  /*
    * Logout
    */
   const logout = async () => {
@@ -247,6 +310,8 @@ const AuthProvider = ({ children }) => {
         isAdmin,
         isSuperAdmin,
         login,
+        loginWithOTP,
+        sendLoginOTP,
         logout,
         hasRole,
       }}
